@@ -5,16 +5,32 @@
         <link rel="icon" href="data:,">
         <title>kaleidoscope.gh</title>
         <style>
-            body {
-                margin: 0;
-                font-family: Arial, Helvetica, sans-serif;
+            body { 
+                margin: 0; font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+                background-color: black; 
             }
-            canvas { width: 100%; height: 100%; }
-            input[type=range] { width: 100%; }
-            #container { position: relative; }
-            #container canvas, #overlay { position: absolute; }
-            #overlay { z-index: 1; width: 100%; }
-            #overlay div { padding: 5px; }
+
+            input {width: 50%;}
+            #container {position: relative;}
+            #overlay {
+                z-index: 1; 
+                width: 100%; 
+                text-align: center;
+                background-color: rgb(255, 255, 255);
+                color: #5c4e9c;
+                font-family: monospace;
+                font-size:medium;
+            }
+
+            #title{
+                color: #5c4e9c;  
+                font-family: monospace;
+                font-size: x-large;
+            }
+            #canvas{
+                max-height: 900px;
+
+            }
             #loader {
                 border: 5px solid #f3f3f3; /* Light grey */
                 border-top: 5px solid #3d3d3d; /* Grey */
@@ -27,6 +43,7 @@
                 left: 50%;
                 z-index: 2;
             }
+
             @keyframes spin {
                 0% { transform: rotate(0deg); }
                 100% { transform: rotate(360deg); }
@@ -36,17 +53,17 @@
     <body>
         <div id="loader"></div> 
         <div id="container">
+        <div id="canvas"></div> 
             <div id="overlay">
                 <div>
-                  <label for="Change Rotation Angle">Change Rotation Angle</label>
-                  <input type="range" id="Change Rotation Angle" min="0" max="3.14" value="1.06" step="1">
+                  <input type="range" id="changeRotationAngle" name="changeRotationAngle" min="0.1" max="3.14" value="2.1" step="0.1">
+                    <label for="changeRotationAngle"> Change Rotation Angle</label>
                 </div>
                 <div>
-                  <label for="Change Seed">Change Seed</label>
-                  <input type="number" id="Change Seed" value="8">
+                  <input type="range" id="changeSeed" name="changeSeed" min="0" max="20" value="10" step="1">
+                  <label for="changeSeed"> Change Seed</label>
+                  <p id="title">KALEIDOSCOPE GENERATOR</p>
                 </div>
-                <div><button id="downloadButton" disabled>Download</button></div>
-                <div><a href="kaleidoscope.gh" download="kaleidoscope.gh.html">Save source code</a></div>
             </div>
         </div>
 
@@ -76,8 +93,7 @@ rhino3dm().then(async m => {
     compute()
 })
 
-const downloadButton = document.getElementById("downloadButton")
-downloadButton.onclick = download
+
 
   /////////////////////////////////////////////////////////////////////////////
  //                            HELPER  FUNCTIONS                            //
@@ -120,30 +136,47 @@ let scene, camera, renderer, controls
 function init() {
 
     // Rhino models are z-up, so set this as the default
-    THREE.Object3D.DefaultUp = new THREE.Vector3( 0, 0, 1 );
+    //THREE.Object3D.DefaultUp = new THREE.Vector3( 0, 0, 1 );
 
     // create a scene and a camera
     scene = new THREE.Scene()
-    scene.background = new THREE.Color(1, 1, 1)
-    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000)
-    camera.position.set(1, -1, 1) // like perspective view
+    scene.background = new THREE.Color("#99ffcc");
+    var left = -100;
+    var right = 100
+    var top = 50
+    var bottom = -50
+    var near = 0.01
+    var far = 1000
+    camera = new THREE.OrthographicCamera(
+            left,
+            right,
+            top,
+            bottom,
+            near,
+            far);
+    camera.position.z = 10;
 
     // very light grey for background, like rhino
-    scene.background = new THREE.Color('whitesmoke')
+    //scene.background = new THREE.Color('whitesmoke')
 
     // create the renderer and add it to the html
     renderer = new THREE.WebGLRenderer({ antialias: true })
     renderer.setPixelRatio( window.devicePixelRatio )
-    renderer.setSize(window.innerWidth, window.innerHeight)
-    document.body.appendChild(renderer.domElement)
+    renderer.setSize(window.innerWidth, window.innerHeight-100)
+    document.getElementById('canvas').appendChild(renderer.domElement)
 
     // add some controls to orbit the camera
     controls = new OrbitControls(camera, renderer.domElement)
 
     // add a directional light
-    const directionalLight = new THREE.DirectionalLight( 0xffffff )
-    directionalLight.intensity = 2
-    scene.add( directionalLight )
+  for ( let i=0; i<30; i++){
+  const directionalLight = new THREE.DirectionalLight(0xffffff);
+  directionalLight.position.x= (Math.random()-0.5) *(500);
+  directionalLight.position.y= (Math.random()-0.5) *(500);
+  directionalLight.position.z= (Math.random()-0.5) *(500);
+  directionalLight.intensity = 3;
+  scene.add(directionalLight);
+ }
 
     const ambientLight = new THREE.AmbientLight()
     scene.add( ambientLight )
@@ -215,18 +248,81 @@ function collectResults(responseJson) {
       showSpinner(false)
       return
     }
+    // go through the objects in the Rhino document
+
+  let objects = doc.objects();
+  for ( let i = 0; i < objects.count; i++ ) {
+  
+    const rhinoObject = objects.get( i );
+
+
+     // asign geometry userstrings to object attributes
+    if ( rhinoObject.geometry().userStringCount > 0 ) {
+      const g_userStrings = rhinoObject.geometry().getUserStrings()
+      rhinoObject.attributes().setUserString(g_userStrings[0][0], g_userStrings[0][1])
+      //console.log(g_userStrings);
+      //console.log(rhinoObject.attributes);
+      
+    }
+  }
 
     // load rhino doc into three.js scene
     const buffer = new Uint8Array(doc.toByteArray()).buffer
     loader.parse( buffer, function ( object ) 
     {
         // debug 
-        /*
-        object.traverse(child => {
-          if (child.material !== undefined)
-            child.material = new THREE.MeshNormalMaterial()
-        }, false)
-        */
+    object.traverse((child) => {
+      if (child.isMesh) {
+
+        if (child.userData.attributes.geometry.userStringCount > 0) {
+          
+          //get color from userStrings
+          const colorData = child.userData.attributes.userStrings[0]
+          const col = colorData[1];
+          //convert color from userstring to THREE color and assign it
+          const threeColor = new THREE.Color("rgb(" + col + ")");
+          //console.log(threeColor);
+          //const mat = new THREE.MeshPhysicalMaterial({ color: threeColor });
+
+          let diamondMaterial = new THREE.MeshPhysicalMaterial( {
+            map: null,
+            color: threeColor,
+            metalness: 1,
+            roughness: 0,
+            opacity: 0.8,
+            side: THREE.BackSide
+,
+            transparent: true,
+            envMapIntensity: 2,
+            premultipliedAlpha: true});
+          child.material = diamondMaterial;
+         //console.log(child);
+         /* const animateGeometry = () => {
+            requestAnimationFrame (animateGeometry)
+            child.rotation.z += 0.1
+            renderer.render( scene, camera )
+        }*/
+        //animateGeometry()
+        }
+      }
+    });
+    object.traverse((child) => {
+      if (child.isLine) {
+
+        if (child.userData.attributes.geometry.userStringCount > 0) {
+          
+          //get color from userStrings
+          const colorData = child.userData.attributes.userStrings[0]
+          const col = colorData[1];
+
+          //convert color from userstring to THREE color and assign it
+          const threeColor = new THREE.Color("rgb(" + col + ")");
+          const mat = new THREE.LineBasicMaterial({ color: threeColor });
+          child.material = mat;
+        }
+      }
+    });
+
 
         // clear objects from scene. do this here to avoid blink
         scene.traverse(child => {
@@ -240,10 +336,10 @@ function collectResults(responseJson) {
 
         // hide spinner and enable download button
         showSpinner(false)
-        downloadButton.disabled = false
+        //downloadButton.disabled = false
 
         // zoom to extents
-        zoomCameraToSelection(camera, controls, scene.children)
+        //zoomCameraToSelection(camera, controls, scene.children)
     })
 }
 
@@ -312,7 +408,7 @@ function onWindowResize() {
 /**
  * Helper function that behaves like rhino's "zoom to selection", but for three.js!
  */
-function zoomCameraToSelection( camera, controls, selection, fitOffset = 1.2 ) {
+/*function zoomCameraToSelection( camera, controls, selection, fitOffset = 1.2 ) {
   
   const box = new THREE.Box3();
   
@@ -343,12 +439,12 @@ function zoomCameraToSelection( camera, controls, selection, fitOffset = 1.2 ) {
   
   controls.update();
   
-}
+}*/
 
 /**
  * This function is called when the download button is clicked
  */
-function download () {
+/*function download () {
     // write rhino doc to "blob"
     const bytes = doc.toByteArray()
     const blob = new Blob([bytes], {type: "application/octect-stream"})
@@ -359,7 +455,7 @@ function download () {
     link.href = window.URL.createObjectURL(blob)
     link.download = filename
     link.click()
-}
+}*/
 
 /**
  * Shows or hides the loading spinner
