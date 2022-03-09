@@ -39,7 +39,7 @@
             <div id="overlay">
                 <div>
                   <label for="IncreaseAttraction">IncreaseAttraction</label>
-                  <input type="number" id="IncreaseAttraction" value="4">
+                  <input type="range" id="IncreaseAttraction" min="0" max="8" value="4" step="1">
                 </div>
                 <div>
                   <label for="StairDensity">StairDensity</label>
@@ -47,7 +47,7 @@
                 </div>
                 <div>
                   <label for="AddTrees">AddTrees</label>
-                  <input type="number" id="AddTrees" value="7">
+                  <input type="range" id="AddTrees" min="0" max="10" value="7" step="1">
                 </div>
                 <div>
                   <label for="WindowCoefficient">WindowCoefficient</label>
@@ -55,20 +55,18 @@
                 </div>
                 <div>
                   <label for="WindowWidthRatio">WindowWidthRatio</label>
-                  <input type="number" id="WindowWidthRatio" value="6">
+                  <input type="range" id="WindowWidthRatio" min="0" max="10" value="6" step="1">
                 </div>
                 <div>
                   <label for="WindowHeightRatio">WindowHeightRatio</label>
-                  <input type="number" id="WindowHeightRatio" value="7">
+                  <input type="range" id="WindowHeightRatio" min="0" max="10" value="7" step="1">
                 </div>
-                <div><button id="downloadButton" disabled>Download</button></div>
-                <div><a href="Flowing Cities.gh" download="Flowing Cities.gh.html">Save source code</a></div>
-            </div>
         </div>
 
         <script type="module">
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.126.0/build/three.module.js'
 import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.126.0/examples/jsm/controls/OrbitControls.js'
+import { TransformControls } from "https://cdn.jsdelivr.net/npm/three@0.126.0/examples/jsm/controls/TransformControls.js";
 import { Rhino3dmLoader } from 'https://cdn.jsdelivr.net/npm/three@0.126.0/examples/jsm/loaders/3DMLoader.js'
 import rhino3dm from 'https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/rhino3dm.module.js'
 
@@ -76,11 +74,30 @@ import rhino3dm from 'https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/rhino3dm
 const loader = new Rhino3dmLoader()
 loader.setLibraryPath( 'https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/' )
 
+
+const definition = "Flowing Cities.gh";
 // initialise 'data' object that will be used by compute()
-const data = {
-  definition: 'Flowing Cities.gh',
-  inputs: getInputs()
-}
+let points = [];
+
+const IncreaseAttraction_slider = document.getElementById("IncreaseAttraction");
+IncreaseAttraction_slider.addEventListener("mouseup", onSliderChange, false);
+IncreaseAttraction_slider.addEventListener("touchend", onSliderChange, false);
+const StairDensity_slider = document.getElementById("StairDensity");
+StairDensity_slider.addEventListener("mouseup", onSliderChange, false);
+StairDensity_slider.addEventListener("touchend", onSliderChange, false);
+const AddTrees_slider = document.getElementById("AddTrees");
+AddTrees_slider.addEventListener("mouseup", onSliderChange, false);
+AddTrees_slider.addEventListener("touchend", onSliderChange, false);
+const WindowCoefficient_slider = document.getElementById("WindowCoefficient");
+WindowCoefficient_slider.addEventListener("mouseup", onSliderChange, false);
+WindowCoefficient_slider.addEventListener("touchend", onSliderChange, false);
+const WindowWidthRatio_slider = document.getElementById("WindowWidthRatio");
+WindowWidthRatio_slider.addEventListener("mouseup", onSliderChange, false);
+WindowWidthRatio_slider.addEventListener("touchend", onSliderChange, false);
+const WindowHeightRatio_slider = document.getElementById("WindowHeightRatio");
+WindowHeightRatio_slider.addEventListener("mouseup", onSliderChange, false);
+WindowHeightRatio_slider.addEventListener("touchend", onSliderChange, false);
+
 
 // globals
 let rhino, doc
@@ -89,11 +106,10 @@ rhino3dm().then(async m => {
     rhino = m
 
     init()
+    rndPts();
     compute()
 })
 
-const downloadButton = document.getElementById("downloadButton")
-downloadButton.onclick = download
 
   /////////////////////////////////////////////////////////////////////////////
  //                            HELPER  FUNCTIONS                            //
@@ -103,28 +119,97 @@ downloadButton.onclick = download
  * Gets <input> elements from html and sets handlers
  * (html is generated from the grasshopper definition)
  */
-function getInputs() {
-  const inputs = {}
-  for (const input of document.getElementsByTagName('input')) {
-    switch (input.type) {
-      case 'number':
-        inputs[input.id] = input.valueAsNumber
-        input.onchange = onSliderChange
-        break
-      case 'range':
-        inputs[input.id] = input.valueAsNumber
-        input.onmouseup = onSliderChange
-        input.ontouchend = onSliderChange
-        break
-      case 'checkbox':
-        inputs[input.id] = input.checked
-        input.onclick = onSliderChange
-        break
-      default:
-        break
-    }
+// function getInputs() {
+//   const inputs = {}
+
+//   for (const input of document.getElementsByTagName('input')) {
+//     switch (input.type) {
+//       case 'number':
+//         inputs[input.id] = input.valueAsNumber
+//         input.onchange = onSliderChange
+//         break
+//       case 'range':
+//         inputs[input.id] = input.valueAsNumber
+//         input.onmouseup = onSliderChange
+//         input.ontouchend = onSliderChange
+//         break
+//       case 'checkbox':
+//         inputs[input.id] = input.checked
+//         input.onclick = onSliderChange
+//         break
+//       default:
+//         break
+//     }
+//   }
+
+//   inputs["points"] = points;
+  
+//   return inputs
+
+// }
+function rndPts() {
+  // generate random points
+
+  const cntPts = 7;
+  const bndX = 15;
+  const bndY = 15;
+
+  for (let i = 0; i < cntPts; i++) {
+    const x = Math.random() * (bndX - -bndX) + -bndX;
+    const y = Math.random() * (bndY - -bndY) + -bndY;
+    const z = Math.random() * (bndY - -bndY) + -bndY;
+
+    const pt = '{"X":' + x + ',"Y":' + y + ',"Z":' + z + "}";
+
+    console.log(`x ${x} y ${y}`);
+
+    points.push(pt);
+
+    //viz in three
+    const icoGeo = new THREE.IcosahedronGeometry(2);
+    const icoMat = new THREE.MeshNormalMaterial();
+    const ico = new THREE.Mesh(icoGeo, icoMat);
+    ico.name = "ico";
+    ico.position.set(x, y, z);
+    scene.add(ico);
+
+    let tcontrols = new TransformControls(camera, renderer.domElement);
+    tcontrols.enabled = true;
+    tcontrols.attach(ico);
+    tcontrols.showZ = false;
+    tcontrols.addEventListener("dragging-changed", onChange);
+    scene.add(tcontrols);
   }
-  return inputs
+}
+
+let dragging = false;
+function onChange() {
+  dragging = !dragging;
+  if (!dragging) {
+    // update points position
+    points = [];
+    scene.traverse((child) => {
+      if (child.name === "ico") {
+        const pt =
+          '{"X":' +
+          child.position.x +
+          ',"Y":' +
+          child.position.y +
+          ',"Z":' +
+          child.position.z +
+          "}";
+        points.push(pt);
+        console.log(pt);
+      }
+    }, false);
+
+    compute();
+
+    controls.enabled = true;
+    return;
+  }
+
+  controls.enabled = false;
 }
 
 // more globals
@@ -174,6 +259,28 @@ function init() {
  * Call appserver
  */
 async function compute() {
+
+  // const data = {
+  //   definition: 'Flowing Cities.gh',
+  //   inputs: getInputs()
+  // };
+
+  const data = {
+    definition: definition,
+    inputs: {
+      points: points,
+      IncreaseAttraction: IncreaseAttraction_slider.valueAsNumber,
+      StairDensity: StairDensity_slider.valueAsNumber,
+      AddTrees: AddTrees_slider.valueAsNumber,
+      WindowCoefficient: WindowCoefficient_slider.valueAsNumber,
+      WindowWidthRatio: WindowWidthRatio_slider.valueAsNumber,
+      WindowHeightRatio: WindowHeightRatio_slider.valueAsNumber,
+      
+    },
+  };
+
+  console.log(data.inputs);
+
   // construct url for GET /solve/definition.gh?name=value(&...)
   const url = new URL('/solve/' + data.definition, window.location.origin)
   Object.keys(data.inputs).forEach(key => url.searchParams.append(key, data.inputs[key]))
@@ -285,24 +392,6 @@ function decodeItem(item) {
  */
 function onSliderChange () {
   showSpinner(true)
-  // get slider values
-  let inputs = {}
-  for (const input of document.getElementsByTagName('input')) {
-    switch (input.type) {
-    case 'number':
-      inputs[input.id] = input.valueAsNumber
-      break
-    case 'range':
-      inputs[input.id] = input.valueAsNumber
-      break
-    case 'checkbox':
-      inputs[input.id] = input.checked
-      break
-    }
-  }
-  
-  data.inputs = inputs
-
   compute()
 }
 
