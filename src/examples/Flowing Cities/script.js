@@ -11,7 +11,6 @@ loader.setLibraryPath( 'https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/' )
 
 const definition = "Flowing Cities.gh";
 // initialise 'data' object that will be used by compute()
-let points = [];
 
 const IncreaseAttraction_slider = document.getElementById("IncreaseAttraction");
 IncreaseAttraction_slider.addEventListener("mouseup", onSliderChange, false);
@@ -32,55 +31,20 @@ const WindowHeightRatio_slider = document.getElementById("WindowHeightRatio");
 WindowHeightRatio_slider.addEventListener("mouseup", onSliderChange, false);
 WindowHeightRatio_slider.addEventListener("touchend", onSliderChange, false);
 
+let points = [];
 
 // globals
 let rhino, doc
 
-rhino3dm().then(async m => {
-    rhino = m
+rhino3dm().then(async (m) => {
+  console.log("Loaded rhino3dm.");
+  rhino = m; // global
 
-    init()
-    rndPts();
-    compute()
-})
+  init();
+  rndPts();
+  compute();
+});
 
-
-  /////////////////////////////////////////////////////////////////////////////
- //                            HELPER  FUNCTIONS                            //
-/////////////////////////////////////////////////////////////////////////////
-
-/**
- * Gets <input> elements from html and sets handlers
- * (html is generated from the grasshopper definition)
- */
-// function getInputs() {
-//   const inputs = {}
-
-//   for (const input of document.getElementsByTagName('input')) {
-//     switch (input.type) {
-//       case 'number':
-//         inputs[input.id] = input.valueAsNumber
-//         input.onchange = onSliderChange
-//         break
-//       case 'range':
-//         inputs[input.id] = input.valueAsNumber
-//         input.onmouseup = onSliderChange
-//         input.ontouchend = onSliderChange
-//         break
-//       case 'checkbox':
-//         inputs[input.id] = input.checked
-//         input.onclick = onSliderChange
-//         break
-//       default:
-//         break
-//     }
-//   }
-
-//   inputs["points"] = points;
-  
-//   return inputs
-
-// }
 function rndPts() {
   // generate random points
 
@@ -194,10 +158,7 @@ function init() {
  */
 async function compute() {
 
-  // const data = {
-  //   definition: 'Flowing Cities.gh',
-  //   inputs: getInputs()
-  // };
+  showSpinner(true);
 
   const data = {
     definition: definition,
@@ -216,67 +177,68 @@ async function compute() {
   console.log(data.inputs);
 
   // construct url for GET /solve/definition.gh?name=value(&...)
-  const url = new URL('/solve/' + data.definition, window.location.origin)
-  Object.keys(data.inputs).forEach(key => url.searchParams.append(key, data.inputs[key]))
-  console.log(url.toString())
-  
+  const request = {
+    method: "POST",
+    body: JSON.stringify(data),
+    headers: { "Content-Type": "application/json" },
+  };
+
   try {
-    const response = await fetch(url)
-  
-    if(!response.ok) {
-      // TODO: check for errors in response json
-      throw new Error(response.statusText)
-    }
+    const response = await fetch("/solve", request);
 
-    const responseJson = await response.json()
+    if (!response.ok) throw new Error(response.statusText);
 
-    collectResults(responseJson)
-
-  } catch(error) {
-    console.error(error)
+    const responseJson = await response.json();
+    collectResults(responseJson);
+  } catch (error) {
+    console.error(error);
   }
 }
 
 /**
  * Parse response
  */
-function collectResults(responseJson) {
+ function collectResults(responseJson) {
+  const values = responseJson.values;
 
-    const values = responseJson.values
+  console.log(values);
 
-    // clear doc
-    if( doc !== undefined)
-        doc.delete()
+  // clear doc
+  try {
+    if (doc !== undefined) doc.delete();
+  } catch {}
 
-    //console.log(values)
-    doc = new rhino.File3dm()
+  //console.log(values)
+  doc = new rhino.File3dm();
 
-    // for each output (RH_OUT:*)...
-    for ( let i = 0; i < values.length; i ++ ) {
-      // ...iterate through data tree structure...
-      for (const path in values[i].InnerTree) {
-        const branch = values[i].InnerTree[path]
-        // ...and for each branch...
-        for( let j = 0; j < branch.length; j ++) {
-          // ...load rhino geometry into doc
-          const rhinoObject = decodeItem(branch[j])
-          if (rhinoObject !== null) {
-            doc.objects().add(rhinoObject, null)
-          }
+  // for each output (RH_OUT:*)...
+  for (let i = 0; i < values.length; i++) {
+    // ...iterate through data tree structure...
+    for (const path in values[i].InnerTree) {
+      const branch = values[i].InnerTree[path];
+      // ...and for each branch...
+      for (let j = 0; j < branch.length; j++) {
+        // ...load rhino geometry into doc
+        const rhinoObject = decodeItem(branch[j]);
+        if (rhinoObject !== null) {
+          // console.log(rhinoObject)
+          doc.objects().add(rhinoObject, null);
         }
       }
     }
+  }
 
-    if (doc.objects().count < 1) {
-      console.error('No rhino objects to load!')
-      showSpinner(false)
-      return
-    }
+  if (doc.objects().count < 1) {
+    console.error("No rhino objects to load!");
+    showSpinner(false);
+    return;
+  }
 
     // load rhino doc into three.js scene
-    const buffer = new Uint8Array(doc.toByteArray()).buffer
-    loader.parse( buffer, function ( object ) 
-    {
+    
+    const buffer = new Uint8Array(doc.toByteArray()).buffer;
+  loader.parse(buffer, function (object) {
+    
         // debug 
         /*
         object.traverse(child => {
@@ -286,18 +248,21 @@ function collectResults(responseJson) {
         */
 
         // clear objects from scene. do this here to avoid blink
-        scene.traverse(child => {
-            if (!child.isLight) {
-                scene.remove(child)
-            }
-        })
+        scene.traverse((child) => {
+          if (
+            child.userData.hasOwnProperty("objectType") &&
+            child.userData.objectType === "File3dm"
+          ) {
+            scene.remove(child);
+          }
+        });
 
         // add object graph from rhino model to three.js scene
         scene.add( object )
 
         // hide spinner and enable download button
         showSpinner(false)
-        downloadButton.disabled = false
+        //downloadButton.disabled = false
 
         // zoom to extents
         zoomCameraToSelection(camera, controls, scene.children)
@@ -307,17 +272,17 @@ function collectResults(responseJson) {
 /**
  * Attempt to decode data tree item to rhino geometry
  */
-function decodeItem(item) {
-  const data = JSON.parse(item.data)
-  if (item.type === 'System.String') {
+ function decodeItem(item) {
+  const data = JSON.parse(item.data);
+  if (item.type === "System.String") {
     // hack for draco meshes
     try {
-        return rhino.DracoCompression.decompressBase64String(data)
+      return rhino.DracoCompression.decompressBase64String(data);
     } catch {} // ignore errors (maybe the string was just a string...)
-  } else if (typeof data === 'object') {
-    return rhino.CommonObject.decode(data)
+  } else if (typeof data === "object") {
+    return rhino.CommonObject.decode(data);
   }
-  return null
+  return null;
 }
 
 /**
@@ -327,6 +292,11 @@ function decodeItem(item) {
 function onSliderChange () {
   showSpinner(true)
   compute()
+}
+
+function showSpinner(enable) {
+  if (enable) document.getElementById("loader").style.display = "block";
+  else document.getElementById("loader").style.display = "none";
 }
 
 /**
@@ -400,12 +370,3 @@ function download () {
     link.click()
 }
 
-/**
- * Shows or hides the loading spinner
- */
-function showSpinner(enable) {
-  if (enable)
-    document.getElementById('loader').style.display = 'block'
-  else
-    document.getElementById('loader').style.display = 'none'
-}
