@@ -50,21 +50,21 @@ function rndPts() {
 
   const cntPts = 4;
   const bndX = 15;
-  const bndY = 15;
+  
 
   for (let i = 0; i < cntPts; i++) {
-    const x = Math.random() * (bndX - -bndX) + -bndX;
-    const y = Math.random() * (bndY - -bndY) + -bndY;
-    const z = Math.random() * (bndY - -bndY) + -bndY;
+    const x = Math.random() *  bndX;
+    const y = Math.random() *  bndX;
+    const z = Math.random() *  bndX;
 
     const pt = '{"X":' + x + ',"Y":' + y + ',"Z":' + z + "}";
 
-    console.log(`x ${x} y ${y}`);
+    console.log(`x ${x} y ${y} z ${z}`);
 
     points.push(pt);
 
     //viz in three
-    const icoGeo = new THREE.IcosahedronGeometry(2);
+    const icoGeo = new THREE.IcosahedronGeometry(0.1);
     const icoMat = new THREE.MeshNormalMaterial();
     const ico = new THREE.Mesh(icoGeo, icoMat);
     ico.name = "ico";
@@ -125,7 +125,8 @@ function init() {
     scene = new THREE.Scene()
     scene.background = new THREE.Color(1, 1, 1)
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000)
-    camera.position.set(1, -1, 1) // like perspective view
+    camera.position.set(-6, -6, 5) // like perspective view
+    camera.lookAt(6,-6,2)
 
     // very light grey for background, like rhino
     scene.background = new THREE.Color('whitesmoke')
@@ -240,12 +241,12 @@ async function compute() {
   loader.parse(buffer, function (object) {
     
         // debug 
-        /*
+        
         object.traverse(child => {
           if (child.material !== undefined)
             child.material = new THREE.MeshNormalMaterial()
         }, false)
-        */
+        
 
         // clear objects from scene. do this here to avoid blink
         scene.traverse((child) => {
@@ -265,7 +266,7 @@ async function compute() {
         //downloadButton.disabled = false
 
         // zoom to extents
-        zoomCameraToSelection(camera, controls, scene.children)
+        //zoomCameraToSelection(camera, controls, scene.children)
     })
 }
 
