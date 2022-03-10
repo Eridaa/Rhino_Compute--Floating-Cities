@@ -4,6 +4,11 @@ import { TransformControls } from "https://cdn.jsdelivr.net/npm/three@0.126.0/ex
 import { Rhino3dmLoader } from 'https://cdn.jsdelivr.net/npm/three@0.126.0/examples/jsm/loaders/3DMLoader.js'
 import rhino3dm from 'https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/rhino3dm.module.js'
 
+
+
+
+
+
 // set up loader for converting the results to threejs
 const loader = new Rhino3dmLoader()
 loader.setLibraryPath( 'https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/' )
@@ -49,7 +54,7 @@ function rndPts() {
   // generate random points
 
   const cntPts = 4;
-  const bndX = 15;
+  const bndX = 12;
   
 
   for (let i = 0; i < cntPts; i++) {
@@ -74,7 +79,7 @@ function rndPts() {
     let tcontrols = new TransformControls(camera, renderer.domElement);
     tcontrols.enabled = true;
     tcontrols.attach(ico);
-    tcontrols.showZ = false;
+    //tcontrols.showZ = false;
     tcontrols.addEventListener("dragging-changed", onChange);
     scene.add(tcontrols);
   }
@@ -120,22 +125,22 @@ function init() {
 
     // Rhino models are z-up, so set this as the default
     THREE.Object3D.DefaultUp = new THREE.Vector3( 0, 0, 1 );
-
+   
     // create a scene and a camera
     scene = new THREE.Scene()
     scene.background = new THREE.Color(1, 1, 1)
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000)
-    camera.position.set(-6, -6, 5) // like perspective view
-    camera.lookAt(6,-6,2)
-
+    camera.position.set(0,0, 35) // like perspective view
+    //camera.lookAt(1,1,1)
+    
     // very light grey for background, like rhino
     scene.background = new THREE.Color('whitesmoke')
 
     // create the renderer and add it to the html
     renderer = new THREE.WebGLRenderer({ antialias: true })
     renderer.setPixelRatio( window.devicePixelRatio )
-    renderer.setSize(window.innerWidth, window.innerHeight)
-    document.body.appendChild(renderer.domElement)
+    renderer.setSize(window.innerWidth, window.innerHeight-200)
+    document.getElementById('canvas').appendChild(renderer.domElement)
 
     // add some controls to orbit the camera
     controls = new OrbitControls(camera, renderer.domElement)
@@ -151,8 +156,12 @@ function init() {
     // handle changes in the window size
     window.addEventListener( 'resize', onWindowResize, false )
 
+    
+
     animate()
 }
+
+
 
 /**
  * Call appserver
@@ -307,6 +316,8 @@ function animate() {
   requestAnimationFrame( animate )
   controls.update()
   renderer.render(scene, camera)
+
+
 }
 
 /**
