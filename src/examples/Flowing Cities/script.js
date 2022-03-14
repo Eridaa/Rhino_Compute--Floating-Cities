@@ -130,8 +130,8 @@ function init() {
     scene = new THREE.Scene()
     scene.background = new THREE.Color(1, 1, 1)
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000)
-    camera.position.set(0,0, 35) // like perspective view
-    //camera.lookAt(1,1,1)
+    camera.position.set(-35,-35, 70) // like perspective view
+    camera.lookAt(5,5,-70)
     
     // very light grey for background, like rhino
     scene.background = new THREE.Color('whitesmoke')

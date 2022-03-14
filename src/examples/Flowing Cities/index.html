@@ -16,10 +16,15 @@
 
             #title{
               position: relative;
-              
+              background-color: rgb(255, 255, 255);
               text-align: center;
+              color: rgb(51, 41, 105);
             }
-            
+
+            #text{
+
+              font-size: small;
+            }            
             input[type=range] 
             { width: 100%; 
               text-align: center;}
@@ -29,7 +34,13 @@
             { position: relative;
               display: flex;
               }
-            #overlay { z-index: 1; width: 100%; }
+            #overlay { 
+              z-index: 1; width: 100%; 
+              background-color: rgb(255, 255, 255);
+              color: rgb(51, 41, 105);
+              font-size: small;
+              text-align: center;
+            }
             #overlay div { padding: 10px; }
 
             input[type=range] {
@@ -39,13 +50,14 @@
             }
             input[type=range]:focus {
               outline: none;
+              
             }
             input[type=range]::-webkit-slider-runnable-track {
               width: 100%;
               height: 12.8px;
               cursor: pointer;
               box-shadow: 0px 0px 0px #000000, 0px 0px 0px #0d0d0d;
-              background: #ac51b5;
+              background: rgb(51, 41, 105);;
               border-radius: 10px;
               border: 0px solid #000101;
             }
@@ -55,13 +67,13 @@
               height: 20px;
               width: 39px;
               border-radius: 7px;
-              background: #65001c;
+              background: rgb(51, 41, 105);;
               cursor: pointer;
               -webkit-appearance: none;
               margin-top: -3.6px;
             }
             input[type=range]:focus::-webkit-slider-runnable-track {
-              background: #ac51b5;
+              background: rgb(51, 41, 105);;
             }
             input[type=range]::-moz-range-track {
               width: 100%;
@@ -69,7 +81,7 @@
               cursor: pointer;
               animate: 0.2s;
               box-shadow: 0px 0px 0px #000000, 0px 0px 0px #0d0d0d;
-              background: #ac51b5;
+              background: rgb(51, 41, 105);;
               border-radius: 10px;
               border: 0px solid #000101;
             }
@@ -79,7 +91,7 @@
               height: 20px;
               width: 39px;
               border-radius: 7px;
-              background: #65001c;
+              background: rgb(51, 41, 105);;
               cursor: pointer;
             }
             input[type=range]::-ms-track {
@@ -93,13 +105,13 @@
               color: transparent;
             }
             input[type=range]::-ms-fill-lower {
-              background: #ac51b5;
+              background: rgb(51, 41, 105);;
               border: 0px solid #000101;
               border-radius: 10px;
               box-shadow: 0px 0px 0px #000000, 0px 0px 0px #0d0d0d;
             }
             input[type=range]::-ms-fill-upper {
-              background: #ac51b5;
+              background: rgb(51, 41, 105);;
               border: 0px solid #000101;
               border-radius: 10px;
               box-shadow: 0px 0px 0px #000000, 0px 0px 0px #0d0d0d;
@@ -110,14 +122,14 @@
               height: 20px;
               width: 39px;
               border-radius: 7px;
-              background: #65001c;
+              background: rgb(51, 41, 105);;
               cursor: pointer;
             }
             input[type=range]:focus::-ms-fill-lower {
-              background: #ac51b5;
+              background: #ffffff;
             }
             input[type=range]:focus::-ms-fill-upper {
-              background: #ac51b5;
+              background: #ffffff;
             }
             
             #loader {
@@ -144,31 +156,35 @@
           <div id="canvas"></div> 
             <div id="overlay">
                 <div >
-                  <label for="IncreaseAttraction">IncreaseAttraction</label>
+                  <label for="IncreaseAttraction">Increase Attraction</label>
                   <input type="range" id="IncreaseAttraction" min="0" max="8" value="4" step="1">
                 </div>
                 <div>
-                  <label for="StairDensity">StairDensity</label>
+                  <label for="StairDensity">Stair Density</label>
                   <input type="range" id="StairDensity" min="0" max="1" value="0.7" step="1">
                 </div>
                 <div>
-                  <label for="AddTrees">AddTrees</label>
+                  <label for="AddTrees">Tree Density</label>
                   <input type="range" id="AddTrees" min="0" max="10" value="7" step="1">
                 </div>
                 <div>
-                  <label for="WindowCoefficient">WindowCoefficient</label>
+                  <label for="WindowCoefficient">Window Density Coefficient</label>
                   <input type="range" id="WindowCoefficient" min="0" max="1" value="0.7" step="1">
                 </div>
                 <div>
-                  <label for="WindowWidthRatio">WindowWidthRatio</label>
+                  <label for="WindowWidthRatio">Window Width Ratio</label>
                   <input type="range" id="WindowWidthRatio" min="0" max="10" value="6" step="1">
                 </div>
                 <div>
-                  <label for="WindowHeightRatio">WindowHeightRatio</label>
+                  <label for="WindowHeightRatio">Window Height Ratio</label>
                   <input type="range" id="WindowHeightRatio" min="0" max="10" value="7" step="1">
                 </div> 
            </div>
-          <div id="title"> <p >FLOWING CITIES</p></div>
+          <div id="title"> 
+            <p >FLOATING CITIES</p>
+            <p id="text">Start moving around the points and playing with the sliders.</p>
+            <p id="text">Form your own floating city.</p>
+          </div>
         </div>
 
         <script type="module" src="./script.js"></script>
