@@ -74,14 +74,15 @@ function rndPts() {
     const ico = new THREE.Mesh(icoGeo, icoMat);
     ico.name = "ico";
     ico.position.set(x, y, z);
-    scene.add(ico);
-
+    sceneL.add(ico);
+    sceneR.add(ico);
     let tcontrols = new TransformControls(camera, renderer.domElement);
     tcontrols.enabled = true;
     tcontrols.attach(ico);
     //tcontrols.showZ = false;
     tcontrols.addEventListener("dragging-changed", onChange);
-    scene.add(tcontrols);
+    sceneL.add(tcontrols);
+    sceneR.add(tcontrols);
   }
 }
 
@@ -91,7 +92,22 @@ function onChange() {
   if (!dragging) {
     // update points position
     points = [];
-    scene.traverse((child) => {
+    sceneR.traverse((child) => {
+      if (child.name === "ico") {
+        const pt =
+          '{"X":' +
+          child.position.x +
+          ',"Y":' +
+          child.position.y +
+          ',"Z":' +
+          child.position.z +
+          "}";
+        points.push(pt);
+        console.log(pt);
+      }
+    }, false);
+
+    sceneL.traverse((child) => {
       if (child.name === "ico") {
         const pt =
           '{"X":' +
@@ -116,7 +132,10 @@ function onChange() {
 }
 
 // more globals
-let scene, camera, renderer, controls
+let  camera, renderer, controls, cubeMap
+let sceneL, sceneR;
+let sliderPos = window.innerWidth / 2;
+
 
 /**
  * Sets up the scene, camera, renderer, lights and controls and starts the animation
@@ -127,38 +146,54 @@ function init() {
     THREE.Object3D.DefaultUp = new THREE.Vector3( 0, 0, 1 );
    
     // create a scene and a camera
-    scene = new THREE.Scene()
-    scene.background = new THREE.Color(1, 1, 1)
+    sceneL = new THREE.Scene()
+
+
+    cubeMap = new THREE.CubeTextureLoader()
+        .setPath('texture/')
+        .load( [ 'px.jpg', 'nx.jpg', 'py.jpg', 'ny.jpg', 'pz.jpg', 'nz.jpg' ] )
+    
+    sceneL.background = cubeMap;
+
+    sceneR = new THREE.Scene()
+    sceneR.background = new THREE.Color('whitesmoke')
+
     camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1, 1000)
     camera.position.set(-35,-35, 70) // like perspective view
     camera.lookAt(5,5,-70)
     
     // very light grey for background, like rhino
-    scene.background = new THREE.Color('whitesmoke')
+    //scene.background = new THREE.Color('whitesmoke')
 
+
+    initSlider();
     // create the renderer and add it to the html
     renderer = new THREE.WebGLRenderer({ antialias: true })
     renderer.setPixelRatio( window.devicePixelRatio )
     renderer.setSize(window.innerWidth, window.innerHeight-200)
+    renderer.setScissorTest( true );
+    renderer.setAnimationLoop( render );
     document.getElementById('canvas').appendChild(renderer.domElement)
 
     // add some controls to orbit the camera
     controls = new OrbitControls(camera, renderer.domElement)
 
+    
+
     // add a directional light
     const directionalLight = new THREE.DirectionalLight( 0xffffff )
     directionalLight.intensity = 2
-    scene.add( directionalLight )
-
+    sceneL.add( directionalLight.clone() )
+    sceneR.add( directionalLight.clone() )
     const ambientLight = new THREE.AmbientLight()
-    scene.add( ambientLight )
-
+    sceneL.add( ambientLight.clone() )
+    sceneR.add( ambientLight.clone() )
     // handle changes in the window size
     window.addEventListener( 'resize', onWindowResize, false )
 
     
 
-    animate()
+    //animate()
 }
 
 
@@ -258,18 +293,26 @@ async function compute() {
         
 
         // clear objects from scene. do this here to avoid blink
-        scene.traverse((child) => {
+        sceneL.traverse((child) => {
           if (
             child.userData.hasOwnProperty("objectType") &&
             child.userData.objectType === "File3dm"
           ) {
-            scene.remove(child);
+            sceneL.remove(child);
           }
         });
 
+        sceneR.traverse((child) => {
+          if (
+            child.userData.hasOwnProperty("objectType") &&
+            child.userData.objectType === "File3dm"
+          ) {
+            sceneR.remove(child);
+          }
+        });
         // add object graph from rhino model to three.js scene
-        scene.add( object )
-
+        sceneL.add( object.clone() )
+        sceneR.add( object.clone() )
         // hide spinner and enable download button
         showSpinner(false)
         //downloadButton.disabled = false
@@ -320,6 +363,46 @@ function animate() {
 
 }
 
+
+function initSlider() {
+
+  const slider = document.querySelector( '.slider' );
+
+  function onPointerDown() {
+
+    if ( event.isPrimary === false ) return;
+
+    controls.enabled = false;
+
+    window.addEventListener( 'pointermove', onPointerMove );
+    window.addEventListener( 'pointerup', onPointerUp );
+
+  }
+
+  function onPointerUp() {
+
+    controls.enabled = true;
+
+    window.removeEventListener( 'pointermove', onPointerMove );
+    window.removeEventListener( 'pointerup', onPointerUp );
+
+  }
+
+  function onPointerMove( e ) {
+
+    if ( event.isPrimary === false ) return;
+
+    sliderPos = Math.max( 0, Math.min( window.innerWidth, e.pageX ) );
+
+    slider.style.left = sliderPos - ( slider.offsetWidth / 2 ) + "px";
+
+  }
+
+  slider.style.touchAction = 'none'; // disable touch scroll
+  slider.addEventListener( 'pointerdown', onPointerDown );
+
+}
+
 /**
  * Helper function for window resizes (resets the camera pov and renderer size)
   */
@@ -327,7 +410,17 @@ function onWindowResize() {
   camera.aspect = window.innerWidth / window.innerHeight
   camera.updateProjectionMatrix()
   renderer.setSize( window.innerWidth, window.innerHeight )
-  animate()
+  //animate()
+}
+
+function render() {
+
+  renderer.setScissor( 0, 0, sliderPos, window.innerHeight );
+  renderer.render( sceneL, camera );
+
+  renderer.setScissor( sliderPos, 0, window.innerWidth, window.innerHeight );
+  renderer.render( sceneR, camera );
+
 }
 
 /**
