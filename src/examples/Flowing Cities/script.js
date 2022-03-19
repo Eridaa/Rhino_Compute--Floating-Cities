@@ -170,7 +170,7 @@ function init() {
     // create the renderer and add it to the html
     renderer = new THREE.WebGLRenderer({ antialias: true })
     renderer.setPixelRatio( window.devicePixelRatio )
-    renderer.setSize(window.innerWidth, window.innerHeight-200)
+    renderer.setSize(window.innerWidth, window.innerHeight)
     renderer.setScissorTest( true );
     renderer.setAnimationLoop( render );
     document.getElementById('canvas').appendChild(renderer.domElement)
