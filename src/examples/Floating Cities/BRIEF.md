@@ -1,4 +1,4 @@
-FLOWING CITIES - a browser game through Rhino-Compute
+FLOATING CITIES - a browser game through Rhino-Compute
 
 Through moving the building blocks and changing the inputs the user is able to form different configurations.
 

@@ -14,7 +14,7 @@ const loader = new Rhino3dmLoader()
 loader.setLibraryPath( 'https://cdn.jsdelivr.net/npm/rhino3dm@0.15.0-beta/' )
 
 
-const definition = "Flowing Cities.gh";
+const definition = "Floating Cities.gh";
 // initialise 'data' object that will be used by compute()
 
 const IncreaseAttraction_slider = document.getElementById("IncreaseAttraction");
@@ -74,7 +74,6 @@ function rndPts() {
     const ico = new THREE.Mesh(icoGeo, icoMat);
     ico.name = "ico";
     ico.position.set(x, y, z);
-    sceneL.add(ico);
     sceneR.add(ico);
     let tcontrols = new TransformControls(camera, renderer.domElement);
     tcontrols.enabled = true;
