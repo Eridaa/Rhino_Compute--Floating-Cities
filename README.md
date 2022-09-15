@@ -19,4 +19,4 @@ Window Height Ratio
 Floating Cities is a project of IAAC, Institute for Advanced Architecture of Catalonia developed in the Master In Advanced Computation For Architecture & Design 2021/2022 by student: Erida Bendo and Faculty: David Andres Leon, Hesham Shawqy
 
 
-<iframe src="https://giphy.com/embed/OtXGyMOnZ2hWsmKlr0" width="480" height="297" frameBorder="0" class="giphy-embed" allowFullScreen></iframe><p><a href="https://giphy.com/gifs/OtXGyMOnZ2hWsmKlr0">via GIPHY</a></p>
+https://media.giphy.com/media/OtXGyMOnZ2hWsmKlr0/giphy.gif
